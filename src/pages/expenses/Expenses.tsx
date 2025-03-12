@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import ExpenseForm from "../../components/expense-form/ExpenseForm";
 import FilterBar from "../../components/filter-bar/FilterBar";
 import DeleteConfirmation from "../../components/delete-confirmation/DeleteConfirmation";
-
+import { useQuery } from "@tanstack/react-query";
+import { expenseApi, getUsersApi, getCategoriesApi } from "../../features/api";
+import moment from "moment";
 
 // Define types based on the database schema
 interface Expense {
@@ -96,9 +98,56 @@ const mockExpenses: Expense[] = [
 
 export default function Expenses() {
   // State for expenses data
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
-  const [filteredExpenses, setFilteredExpenses] =
-    useState<Expense[]>(mockExpenses);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [usersData, setUsersData] = useState<any[]>([]);
+
+  const {
+    data: expense_data,
+    isError: expenseisError,
+    isLoading: expenseisLoading,
+    refetch: expenseRefetch,
+  } = useQuery({
+    queryKey: ["expenses"],
+    queryFn: () => expenseApi(),
+  });
+
+  const {
+    data: users_data,
+    isError: usersisError,
+    isLoading: usersisLoading,
+    refetch: usersRefetch,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => getUsersApi(),
+  });
+
+  const {
+    data: category_data,
+    isError: categoryisError,
+    isLoading: categoryisLoading,
+    refetch: categoryRefetch,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => getCategoriesApi(),
+  });
+
+  useEffect(() => {
+    console.log(expense_data);
+    if (typeof expense_data !== "undefined") {
+      setExpenses(expense_data);
+      setFilteredExpenses(expense_data);
+    }
+
+    if (typeof users_data !== "undefined") {
+      setUsersData(users_data);
+    }
+
+    if (typeof category_data !== "undefined") {
+      setCategoryData(category_data);
+    }
+  }, [expense_data, category_data, users_data]);
 
   // State for form handling
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -119,7 +168,7 @@ export default function Expenses() {
 
   // Apply filters when filter state changes
   useEffect(() => {
-    let result = [...expenses];
+    let result = [...filteredExpenses];
 
     if (filters.category_id > 0) {
       result = result.filter(
@@ -195,19 +244,6 @@ export default function Expenses() {
     setIsDeleteConfirmOpen(true);
   };
 
-  // Get category name by ID
-  const getCategoryName = (categoryId: number) => {
-    return (
-      mockCategories.find((category) => category.id === categoryId)?.name ||
-      "Unknown"
-    );
-  };
-
-  // Get user name by ID
-  const getUserName = (userId: number) => {
-    return mockUsers.find((user) => user.id === userId)?.name || "Unknown";
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -237,8 +273,8 @@ export default function Expenses() {
       </div>
 
       <FilterBar
-        categories={mockCategories}
-        users={mockUsers}
+        categories={categoryData}
+        users={usersData}
         filters={filters}
         setFilters={setFilters}
       />
@@ -273,7 +309,7 @@ export default function Expenses() {
                 filteredExpenses.map((expense) => (
                   <tr key={expense.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {expense.date}
+                      {moment(expense.date).format("YYYY-MM-DD")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -290,7 +326,7 @@ export default function Expenses() {
                             : "bg-pink-100 text-pink-800"
                         }`}
                       >
-                        {getCategoryName(expense.category_id)}
+                        {expense.category}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
@@ -300,7 +336,7 @@ export default function Expenses() {
                       {expense.amount}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {getUserName(expense.user_id)}
+                      {expense.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
@@ -366,11 +402,11 @@ export default function Expenses() {
             <div className="text-sm text-gray-700">
               Showing{" "}
               <span className="font-medium">{filteredExpenses.length}</span> of{" "}
-              <span className="font-medium">{expenses.length}</span> expenses
+              <span className="font-medium">{filteredExpenses.length}</span>{" "}
+              expenses
             </div>
             <div className="text-sm font-medium text-gray-900">
-              Total:{" "}
-              12.30
+              Total: 12.30
             </div>
           </div>
         </div>
@@ -379,8 +415,8 @@ export default function Expenses() {
       {/* Add Expense Form Modal */}
       {isAddFormOpen && (
         <ExpenseForm
-          users={mockUsers}
-          categories={mockCategories}
+          categories={categoryData}
+          users={usersData}
           onSubmit={handleAddExpense}
           onCancel={() => setIsAddFormOpen(false)}
           title="Add New Expense"
@@ -390,8 +426,8 @@ export default function Expenses() {
       {/* Edit Expense Form Modal */}
       {isEditFormOpen && currentExpense && (
         <ExpenseForm
-          users={mockUsers}
-          categories={mockCategories}
+          categories={categoryData}
+          users={usersData}
           expense={currentExpense}
           onSubmit={handleUpdateExpense}
           onCancel={() => {
