@@ -3,16 +3,22 @@ import Modal from "../modal/Modal";
 interface DeleteConfirmationProps {
   onConfirm: () => void;
   onClose: () => void;
-  isOpen:boolean
+  isOpen: boolean;
+  expenseRefetch: any;
+  userRefetch: any;
+  categoryRefetch: any;
 }
 
 export default function DeleteConfirmation({
   onConfirm,
   onClose,
-  isOpen
+  isOpen,
+  expenseRefetch,
+  userRefetch,
+  categoryRefetch,
 }: DeleteConfirmationProps) {
   return (
-    <Modal isOpen={isOpen} title={'Delete Expense'} onClose={onClose}>
+    <Modal isOpen={isOpen} title={"Delete Expense"} onClose={onClose}>
       <div className="px-6 py-4">
         <p className="text-sm text-gray-600">
           Are you sure you want to delete this expense? This action cannot be

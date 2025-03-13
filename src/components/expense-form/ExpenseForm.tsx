@@ -3,6 +3,9 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
 import Modal from "../modal/Modal";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addExpenseApi, updateExpenseApi } from "../../features/api";
+import moment from "moment";
 
 interface Expense {
   id: number;
@@ -21,8 +24,12 @@ interface ExpenseFormProps {
   categories: { id: number; name: string }[];
   onSubmit: (expense: any) => void;
   onClose: () => void;
-  isOpen:boolean;
+  isOpen: boolean;
   title: string;
+  isEdit: boolean;
+  expenseRefetch: any;
+  userRefetch: any;
+  categoryRefetch: any;
 }
 interface UserOption {
   value: number | string;
@@ -42,6 +49,10 @@ export default function ExpenseForm({
   onClose,
   isOpen,
   title,
+  isEdit,
+  expenseRefetch,
+  categoryRefetch,
+  userRefetch,
 }: ExpenseFormProps) {
   const [formData, setFormData] = useState({
     user_id: 0,
@@ -50,15 +61,50 @@ export default function ExpenseForm({
     date: "",
     description: "",
     userName: "",
+    email: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryOption | null>(null);
 
+  const [showEmail, setShowEmailForm] = useState<boolean>(false);
+
+  const { mutate: addExpenseMutate, error } = useMutation({
+    mutationFn: addExpenseApi,
+    mutationKey: ["addExpense"],
+    onSuccess: (data: any) => {
+      console.log("Login successful", data);
+      if (data) {
+        expenseRefetch();
+        categoryRefetch();
+        userRefetch();
+      }
+    },
+    onError: (err: Error) => {
+      console.error("Login error", err);
+    },
+  });
+
+  const { mutate: updateExpenseMutate, error: updateError } = useMutation({
+    mutationFn: updateExpenseApi,
+    mutationKey: ["updateExpense"],
+    onSuccess: (data: any) => {
+      console.log("Login successful", data);
+      if (data) {
+        expenseRefetch();
+        categoryRefetch();
+        userRefetch();
+      }
+    },
+    onError: (err: Error) => {
+      console.error("Login error", err);
+    },
+  });
+
   // Initialize form with expense data if editing
   useEffect(() => {
-    if (expense) {
+    if (expense && isEdit === true) {
       setFormData({
         user_id: expense.user_id,
         category_id: expense.category_id,
@@ -66,6 +112,7 @@ export default function ExpenseForm({
         date: expense.date,
         description: expense.description,
         userName: "",
+        email: "",
       });
 
       const existingUser = users.find((user) => user.id === expense.user_id);
@@ -79,17 +126,18 @@ export default function ExpenseForm({
         });
       }
     }
-  }, [expense]);
+  }, [expense, isEdit]);
 
   const handleCategoryChange = (newValue: CategoryOption | null) => {
     setSelectedCategory(newValue);
+    console.log("newValue", newValue);
     if (newValue) {
       setFormData({
         ...formData,
         category_id:
           newValue.value && typeof newValue.value === "number"
             ? newValue.value
-            : 0, // if new entry, you might store 0 or handle it differently
+            : (newValue as any).value, // if new entry, you might store 0 or handle it differently
         // Optionally, you could add a categoryName property to your formData if you want to save new category names
       });
     } else {
@@ -105,6 +153,19 @@ export default function ExpenseForm({
 
   const handleUserChange = (newValue: UserOption | null) => {
     setSelectedUser(newValue);
+    console.log(newValue, "newValue");
+
+    if (
+      typeof newValue?.value === "string" &&
+      newValue.label === newValue.value
+    ) {
+      setShowEmailForm(true);
+    }
+
+    if (typeof newValue?.value === "number") {
+      setShowEmailForm(false);
+    }
+
     if (newValue) {
       // If the selected value is from the list, newValue.value will be a number.
       // Otherwise it could be a string if it's a new entry.
@@ -146,6 +207,8 @@ export default function ExpenseForm({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    console.log(formData, "errors");
+
     if (!formData.user_id) {
       newErrors.user_id = "User is required";
     }
@@ -172,21 +235,36 @@ export default function ExpenseForm({
     e.preventDefault();
 
     if (validateForm()) {
-      const submittedData = {
-        ...formData,
-        user_id: Number(formData.user_id),
-        category_id: Number(formData.category_id),
-        amount: Number(formData.amount),
-      };
-
-      if (expense) {
-        onSubmit({
-          ...submittedData,
-          id: expense.id,
-          created_at: expense.created_at,
+      if (isEdit) {
+        const feedData = {
+          id: expense?.id,
+          amount: formData.amount,
+          date: moment(formData.date).format('YYYY-MM-DD'),
+          description: formData.description,
+        };
+        updateExpenseMutate(feedData);
+        setFormData({
+          user_id: 0,
+          category_id: 0,
+          amount: "",
+          date: "",
+          description: "",
+          userName: "",
+          email: "",
         });
+        onClose();
       } else {
-        onSubmit(submittedData);
+        setFormData({
+          user_id: 0,
+          category_id: 0,
+          amount: "",
+          date: "",
+          description: "",
+          userName: "",
+          email: "",
+        });
+        addExpenseMutate(formData);
+        onClose();
       }
     }
   };
@@ -226,6 +304,7 @@ export default function ExpenseForm({
             isClearable
             placeholder="Select or enter user"
             classNamePrefix="react-select"
+            isDisabled={isEdit ? false : true}
           />
           {errors.user_id && (
             <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>
@@ -243,16 +322,40 @@ export default function ExpenseForm({
             id="category_id"
             name="category_id"
             value={selectedCategory}
-            onChange={handleCategoryChange} // if separate, use handleCategoryChange
+            onChange={handleCategoryChange}
             options={categoryOptions}
             isClearable
             placeholder="Select or enter category"
             classNamePrefix="react-select"
+            isDisabled={isEdit ? false : true}
           />
           {errors.category_id && (
             <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
           )}
         </div>
+
+        {showEmail && (
+          <div className="mb-4">
+            <label
+              htmlFor="category_id"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              email
+            </label>
+            <input
+              type="text"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your Email"
+              className={`w-full rounded-md border shadow-sm py-2 pl-7 pr-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+            />
+            {/* {errors.category_id && (
+              <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
+            )} */}
+          </div>
+        )}
 
         <div className="mb-4">
           <label

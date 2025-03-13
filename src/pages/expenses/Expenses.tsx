@@ -2,8 +2,13 @@ import { useState, useEffect } from "react";
 import ExpenseForm from "../../components/expense-form/ExpenseForm";
 import FilterBar from "../../components/filter-bar/FilterBar";
 import DeleteConfirmation from "../../components/delete-confirmation/DeleteConfirmation";
-import { useQuery } from "@tanstack/react-query";
-import { expenseApi, getUsersApi, getCategoriesApi } from "../../features/api";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import {
+  expenseApi,
+  getUsersApi,
+  getCategoriesApi,
+  deleteExpenseApi,
+} from "../../features/api";
 import moment from "moment";
 
 // Define types based on the database schema
@@ -110,7 +115,7 @@ export default function Expenses() {
     refetch: expenseRefetch,
   } = useQuery({
     queryKey: ["expenses"],
-    queryFn: () => expenseApi(),
+    queryFn: () => expenseApi(filters),
   });
 
   const {
@@ -133,10 +138,23 @@ export default function Expenses() {
     queryFn: () => getCategoriesApi(),
   });
 
+  const { mutate: deleteExpenseMutate, error } = useMutation({
+    mutationFn: deleteExpenseApi,
+    mutationKey: ["deleteExpense"],
+    onSuccess: (data: any) => {
+      if (data) {
+        expenseRefetch();
+        categoryRefetch();
+        usersRefetch();
+      }
+    },
+    onError: (err: Error) => {
+      console.error("Login error", err);
+    },
+  });
+
   useEffect(() => {
-    console.log(expense_data);
     if (typeof expense_data !== "undefined") {
-      setExpenses(expense_data);
       setFilteredExpenses(expense_data);
     }
 
@@ -149,53 +167,24 @@ export default function Expenses() {
     }
   }, [expense_data, category_data, users_data]);
 
-  // State for form handling
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentExpense, setCurrentExpense] = useState<Expense | null>(null);
 
-  // State for delete confirmation
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<number | null>(null);
 
-  // State for filters
   const [filters, setFilters] = useState({
-    category_id: 0,
-    user_id: 0,
+    category_id: "",
+    user_id: "",
     startDate: "",
     endDate: "",
   });
 
-  // Apply filters when filter state changes
   useEffect(() => {
-    let result = [...filteredExpenses];
+    expenseRefetch();
+  }, [filters]);
 
-    if (filters.category_id > 0) {
-      result = result.filter(
-        (expense) => expense.category_id === filters.category_id
-      );
-    }
-
-    if (filters.user_id > 0) {
-      result = result.filter((expense) => expense.user_id === filters.user_id);
-    }
-
-    if (filters.startDate) {
-      result = result.filter(
-        (expense) => new Date(expense.date) >= new Date(filters.startDate)
-      );
-    }
-
-    if (filters.endDate) {
-      result = result.filter(
-        (expense) => new Date(expense.date) <= new Date(filters.endDate)
-      );
-    }
-
-    setFilteredExpenses(result);
-  }, [expenses, filters]);
-
-  // Handle adding a new expense
   const handleAddExpense = (
     expense: Omit<Expense, "id" | "created_at" | "updated_at">
   ) => {
@@ -226,7 +215,7 @@ export default function Expenses() {
   // Handle deleting an expense
   const handleDeleteExpense = () => {
     if (expenseToDelete !== null) {
-      setExpenses(expenses.filter((expense) => expense.id !== expenseToDelete));
+      deleteExpenseMutate({ id: expenseToDelete });
       setIsDeleteConfirmOpen(false);
       setExpenseToDelete(null);
     }
@@ -412,7 +401,6 @@ export default function Expenses() {
         </div>
       </div>
 
-      {/* Add Expense Form Modal */}
       {isAddFormOpen && (
         <ExpenseForm
           categories={categoryData}
@@ -421,10 +409,13 @@ export default function Expenses() {
           isOpen={isAddFormOpen}
           onClose={() => setIsAddFormOpen(false)}
           title="Add New Expense"
+          isEdit={false}
+          expenseRefetch={expenseRefetch}
+          userRefetch={usersRefetch}
+          categoryRefetch={categoryRefetch}
         />
       )}
 
-      {/* Edit Expense Form Modal */}
       {isEditFormOpen && currentExpense && (
         <ExpenseForm
           categories={categoryData}
@@ -437,10 +428,13 @@ export default function Expenses() {
             setCurrentExpense(null);
           }}
           title="Edit Expense"
+          isEdit={true}
+          expenseRefetch={expenseRefetch}
+          userRefetch={usersRefetch}
+          categoryRefetch={categoryRefetch}
         />
       )}
 
-      {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (
         <DeleteConfirmation
           onConfirm={handleDeleteExpense}
@@ -449,6 +443,9 @@ export default function Expenses() {
             setIsDeleteConfirmOpen(false);
             setExpenseToDelete(null);
           }}
+          expenseRefetch={expenseRefetch}
+          userRefetch={usersRefetch}
+          categoryRefetch={categoryRefetch}
         />
       )}
     </div>

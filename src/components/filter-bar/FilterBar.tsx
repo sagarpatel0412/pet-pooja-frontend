@@ -1,4 +1,3 @@
-
 import type React from "react";
 
 import { useState } from "react";
@@ -7,15 +6,15 @@ interface FilterBarProps {
   categories: { id: number; name: string }[];
   users: { id: number; name: string }[];
   filters: {
-    category_id: number;
-    user_id: number;
+    category_id: any;
+    user_id: any;
     startDate: string;
     endDate: string;
   };
   setFilters: React.Dispatch<
     React.SetStateAction<{
-      category_id: number;
-      user_id: number;
+      category_id: any;
+      user_id: any;
       startDate: string;
       endDate: string;
     }>
@@ -32,8 +31,8 @@ export default function FilterBar({
 
   const handleReset = () => {
     setFilters({
-      category_id: 0,
-      user_id: 0,
+      category_id: "",
+      user_id: "",
       startDate: "",
       endDate: "",
     });
