@@ -418,7 +418,8 @@ export default function Expenses() {
           categories={categoryData}
           users={usersData}
           onSubmit={handleAddExpense}
-          onCancel={() => setIsAddFormOpen(false)}
+          isOpen={isAddFormOpen}
+          onClose={() => setIsAddFormOpen(false)}
           title="Add New Expense"
         />
       )}
@@ -430,7 +431,8 @@ export default function Expenses() {
           users={usersData}
           expense={currentExpense}
           onSubmit={handleUpdateExpense}
-          onCancel={() => {
+          isOpen={isEditFormOpen}
+          onClose={() => {
             setIsEditFormOpen(false);
             setCurrentExpense(null);
           }}
@@ -442,7 +444,8 @@ export default function Expenses() {
       {isDeleteConfirmOpen && (
         <DeleteConfirmation
           onConfirm={handleDeleteExpense}
-          onCancel={() => {
+          isOpen={isDeleteConfirmOpen}
+          onClose={() => {
             setIsDeleteConfirmOpen(false);
             setExpenseToDelete(null);
           }}
