@@ -135,6 +135,66 @@ const deleteExpenseApi = async (data: any) => {
   }
 };
 
+const getNextMonthExp = async (): Promise<any> => {
+  try {
+    const response = await axios.get("/stats/predict-next-month");
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      // Extract error details from AxiosError
+      const errorMessage =
+        error.response?.data?.message || "An error occurred during login";
+      const statusCode = error.response?.status || 500;
+      console.error(`Login error with status ${statusCode}:`, errorMessage);
+      throw new Error(`Error ${statusCode}: ${errorMessage}`);
+    } else {
+      // Handle any unknown errors
+      console.error("Unknown error occurred during login");
+      throw new Error("Unknown error occurred during login");
+    }
+  }
+};
+
+const getPercentageExp = async (): Promise<any> => {
+  try {
+    const response = await axios.get("/stats/percentage-change");
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      // Extract error details from AxiosError
+      const errorMessage =
+        error.response?.data?.message || "An error occurred during login";
+      const statusCode = error.response?.status || 500;
+      console.error(`Login error with status ${statusCode}:`, errorMessage);
+      throw new Error(`Error ${statusCode}: ${errorMessage}`);
+    } else {
+      // Handle any unknown errors
+      console.error("Unknown error occurred during login");
+      throw new Error("Unknown error occurred during login");
+    }
+  }
+};
+
+const getTopSpendingExp = async (): Promise<any> => {
+  try {
+    const response = await axios.get("/stats/top-spending-days");
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      // Extract error details from AxiosError
+      const errorMessage =
+        error.response?.data?.message || "An error occurred during login";
+      const statusCode = error.response?.status || 500;
+      console.error(`Login error with status ${statusCode}:`, errorMessage);
+      throw new Error(`Error ${statusCode}: ${errorMessage}`);
+    } else {
+      // Handle any unknown errors
+      console.error("Unknown error occurred during login");
+      throw new Error("Unknown error occurred during login");
+    }
+  }
+};
+
 export {
   expenseApi,
   getUsersApi,
@@ -142,4 +202,7 @@ export {
   addExpenseApi,
   updateExpenseApi,
   deleteExpenseApi,
+  getNextMonthExp,
+  getPercentageExp,
+  getTopSpendingExp,
 };
