@@ -1,13 +1,5 @@
-import Modal from "../modal/Modal";
-
-interface DeleteConfirmationProps {
-  onConfirm: () => void;
-  onClose: () => void;
-  isOpen: boolean;
-  expenseRefetch: any;
-  userRefetch: any;
-  categoryRefetch: any;
-}
+import { DeleteConfirmationProps } from "../../features/interface";
+import Modal from "../modal";
 
 export default function DeleteConfirmation({
   onConfirm,

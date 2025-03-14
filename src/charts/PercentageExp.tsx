@@ -23,17 +23,8 @@ ChartJS.register(
   Legend
 );
 
-// Example fetch function – adjust the endpoint to match your backend
-const fetchExpenditureData = async () => {
-  const response = await fetch("/api/expenditures");
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-  return response.json();
-};
-
 const PercentageExp = () => {
-  // Using react query to fetch the data
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["precentageExp"],
     queryFn: () => getPercentageExp(),
@@ -43,15 +34,12 @@ const PercentageExp = () => {
   if (isError)
     return <div className="text-center text-red-500">Error loading data</div>;
 
-  // Process data:
-  // 1. Extract all unique months and sort them
   const monthsSet = new Set();
-  data.forEach((item: any) => monthsSet.add(item.month));
+  data.data.forEach((item: any) => monthsSet.add(item.month));
   const months = Array.from(monthsSet).sort();
 
-  // 2. Group data by user (using user_id) and map month to expenditure
   const users: any = {};
-  data.forEach((item: any) => {
+  data.data.forEach((item: any) => {
     if (!users[item.user_id]) {
       users[item.user_id] = { name: item.name, data: {} };
     }

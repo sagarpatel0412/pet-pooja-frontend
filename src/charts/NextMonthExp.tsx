@@ -32,8 +32,8 @@ function NextMonthExp() {
       <div className="text-center py-4 text-red-500">Error loading data.</div>
     );
 
-  const labels = data.map((item: any) => item.name);
-  const expenditures = data.map((item: any) =>
+  const labels = data.data.map((item: any) => item.name);
+  const expenditures = data.data.map((item: any) =>
     parseFloat(item.predicted_next_month_expenditure)
   );
   const chartData = {

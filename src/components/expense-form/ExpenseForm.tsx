@@ -2,44 +2,16 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
-import Modal from "../modal/Modal";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Modal from "../modal";
+import { useMutation } from "@tanstack/react-query";
 import { addExpenseApi, updateExpenseApi } from "../../features/api";
 import moment from "moment";
-
-interface Expense {
-  id: number;
-  user_id: number;
-  category_id: number;
-  amount: number;
-  date: string;
-  description: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ExpenseFormProps {
-  expense?: Expense;
-  users: { id: number; name: string }[];
-  categories: { id: number; name: string }[];
-  onSubmit: (expense: any) => void;
-  onClose: () => void;
-  isOpen: boolean;
-  title: string;
-  isEdit: boolean;
-  expenseRefetch: any;
-  userRefetch: any;
-  categoryRefetch: any;
-}
-interface UserOption {
-  value: number | string;
-  label: string;
-}
-
-interface CategoryOption {
-  value: number | string;
-  label: string;
-}
+import { toast } from "react-toastify";
+import {
+  CategoryOption,
+  ExpenseFormProps,
+  UserOption,
+} from "../../features/interface";
 
 export default function ExpenseForm({
   expense,
@@ -79,10 +51,12 @@ export default function ExpenseForm({
         expenseRefetch();
         categoryRefetch();
         userRefetch();
+        toast.success(`Task added successfully`);
       }
     },
     onError: (err: Error) => {
       console.error("Login error", err);
+      toast.error(`Something went wrong`);
     },
   });
 
@@ -95,14 +69,15 @@ export default function ExpenseForm({
         expenseRefetch();
         categoryRefetch();
         userRefetch();
+        toast.success(`Task updated successfully`);
       }
     },
     onError: (err: Error) => {
       console.error("Login error", err);
+      toast.error(`Something went wrong`);
     },
   });
 
-  // Initialize form with expense data if editing
   useEffect(() => {
     if (expense && isEdit === true) {
       setFormData({
@@ -116,29 +91,42 @@ export default function ExpenseForm({
       });
 
       const existingUser = users.find((user) => user.id === expense.user_id);
+      const existingCategory = categories.find((category: any) => {
+        return category.id === expense.category_id;
+      });
+
+      if (existingCategory) {
+        setSelectedCategory({
+          value: existingCategory.id,
+          label: existingCategory.name,
+        });
+      } else {
+        setSelectedCategory({
+          value: expense.category_id,
+          label: expense.category_id.toString(),
+        });
+      }
+
       if (existingUser) {
         setSelectedUser({ value: existingUser.id, label: existingUser.name });
       } else {
-        // Otherwise, assume it is a custom name
         setSelectedUser({
           value: expense.user_id,
           label: expense.user_id.toString(),
         });
       }
     }
-  }, [expense, isEdit]);
+  }, [expense, isEdit, categories]);
 
   const handleCategoryChange = (newValue: CategoryOption | null) => {
     setSelectedCategory(newValue);
-    console.log("newValue", newValue);
     if (newValue) {
       setFormData({
         ...formData,
         category_id:
           newValue.value && typeof newValue.value === "number"
             ? newValue.value
-            : (newValue as any).value, // if new entry, you might store 0 or handle it differently
-        // Optionally, you could add a categoryName property to your formData if you want to save new category names
+            : (newValue as any).value,
       });
     } else {
       setFormData({
@@ -153,7 +141,6 @@ export default function ExpenseForm({
 
   const handleUserChange = (newValue: UserOption | null) => {
     setSelectedUser(newValue);
-    console.log(newValue, "newValue");
 
     if (
       typeof newValue?.value === "string" &&
@@ -163,12 +150,14 @@ export default function ExpenseForm({
     }
 
     if (typeof newValue?.value === "number") {
+      setFormData({
+        ...formData,
+        email: "",
+      });
       setShowEmailForm(false);
     }
 
     if (newValue) {
-      // If the selected value is from the list, newValue.value will be a number.
-      // Otherwise it could be a string if it's a new entry.
       setFormData({
         ...formData,
         user_id: (newValue as any).value,
@@ -184,7 +173,7 @@ export default function ExpenseForm({
         userName: "",
       });
     }
-    // Clear error for user if it existed
+
     if (errors["user_id"]) {
       setErrors({ ...errors, user_id: "" });
     }
@@ -198,7 +187,6 @@ export default function ExpenseForm({
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
-    // Clear error when field is changed
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
@@ -206,8 +194,6 @@ export default function ExpenseForm({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    console.log(formData, "errors");
 
     if (!formData.user_id) {
       newErrors.user_id = "User is required";
@@ -239,7 +225,7 @@ export default function ExpenseForm({
         const feedData = {
           id: expense?.id,
           amount: formData.amount,
-          date: moment(formData.date).format('YYYY-MM-DD'),
+          date: moment(formData.date).format("YYYY-MM-DD"),
           description: formData.description,
         };
         updateExpenseMutate(feedData);
@@ -304,7 +290,7 @@ export default function ExpenseForm({
             isClearable
             placeholder="Select or enter user"
             classNamePrefix="react-select"
-            isDisabled={isEdit ? false : true}
+            isDisabled={isEdit ? true : false}
           />
           {errors.user_id && (
             <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>
@@ -327,7 +313,7 @@ export default function ExpenseForm({
             isClearable
             placeholder="Select or enter category"
             classNamePrefix="react-select"
-            isDisabled={isEdit ? false : true}
+            isDisabled={isEdit ? true : false}
           />
           {errors.category_id && (
             <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
@@ -442,143 +428,5 @@ export default function ExpenseForm({
         </div>
       </form>
     </Modal>
-    // <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-    //   <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-    //     <div className="px-6 py-4 border-b border-gray-200">
-    //       <h3 className="text-lg font-medium text-gray-800">{title}</h3>
-    //     </div>
-
-    //     <form onSubmit={handleSubmit} className="px-6 py-4">
-
-    //       <div className="mb-4">
-    //         <label
-    //           htmlFor="user_id"
-    //           className="block text-sm font-medium text-gray-700 mb-1"
-    //         >
-    //           User
-    //         </label>
-    //         <CreatableSelect
-    //           id="user"
-    //           name="user"
-    //           value={selectedUser}
-    //           onChange={handleUserChange}
-    //           options={userOptions}
-    //           isClearable
-    //           placeholder="Select or enter user"
-    //           classNamePrefix="react-select"
-    //         />
-    //         {errors.user_id && (
-    //           <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>
-    //         )}
-    //       </div>
-
-    //       <div className="mb-4">
-    //         <label
-    //           htmlFor="category_id"
-    //           className="block text-sm font-medium text-gray-700 mb-1"
-    //         >
-    //           Category
-    //         </label>
-    //         <CreatableSelect
-    //           id="category_id"
-    //           name="category_id"
-    //           value={selectedCategory}
-    //           onChange={handleCategoryChange} // if separate, use handleCategoryChange
-    //           options={categoryOptions}
-    //           isClearable
-    //           placeholder="Select or enter category"
-    //           classNamePrefix="react-select"
-    //         />
-    //         {errors.category_id && (
-    //           <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
-    //         )}
-    //       </div>
-
-    //       <div className="mb-4">
-    //         <label
-    //           htmlFor="amount"
-    //           className="block text-sm font-medium text-gray-700 mb-1"
-    //         >
-    //           Amount
-    //         </label>
-    //         <div className="relative rounded-md shadow-sm">
-    //           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-    //             <span className="text-gray-500 sm:text-sm">$</span>
-    //           </div>
-    //           <input
-    //             type="text"
-    //             id="amount"
-    //             name="amount"
-    //             value={formData.amount}
-    //             onChange={handleChange}
-    //             placeholder="0.00"
-    //             className={`w-full rounded-md border ${
-    //               errors.amount ? "border-red-500" : "border-gray-300"
-    //             } shadow-sm py-2 pl-7 pr-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-    //           />
-    //         </div>
-    //         {errors.amount && (
-    //           <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
-    //         )}
-    //       </div>
-
-    //       <div className="mb-4">
-    //         <label
-    //           htmlFor="date"
-    //           className="block text-sm font-medium text-gray-700 mb-1"
-    //         >
-    //           Date
-    //         </label>
-    //         <input
-    //           type="date"
-    //           id="date"
-    //           name="date"
-    //           value={formData.date}
-    //           onChange={handleChange}
-    //           className={`w-full rounded-md border ${
-    //             errors.date ? "border-red-500" : "border-gray-300"
-    //           } shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-    //         />
-    //         {errors.date && (
-    //           <p className="mt-1 text-sm text-red-600">{errors.date}</p>
-    //         )}
-    //       </div>
-
-    //       <div className="mb-4">
-    //         <label
-    //           htmlFor="description"
-    //           className="block text-sm font-medium text-gray-700 mb-1"
-    //         >
-    //           Description
-    //         </label>
-    //         <textarea
-    //           id="description"
-    //           name="description"
-    //           rows={3}
-    //           value={formData.description}
-    //           onChange={handleChange}
-    //           className="w-full rounded-md border border-gray-300 shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-    //           placeholder="Enter expense description"
-    //         />
-    //       </div>
-
-    //       <div className="flex justify-end space-x-2 pt-4 border-t border-gray-200">
-    //         <button
-    //           type="button"
-    //           onClick={onClose}
-    //           className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg"
-    //         >
-    //           Cancel
-    //         </button>
-    //         <button
-    //           type="submit"
-    //           className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg"
-    //         >
-    //           {expense ? "Update" : "Save"}
-    //         </button>
-    //       </div>
-    //     </form>
-    //   </div>
-    // </div>
   );
 }

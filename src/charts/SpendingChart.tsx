@@ -33,11 +33,13 @@ const SpendingChart = () => {
   if (isError)
     return <div className="text-center text-red-500">Error loading data</div>;
 
-  const labels = data.map((item: any) =>
+  const labels = data.data.map((item: any) =>
     moment(item.date).format("YYYY-MM-DD")
   );
 
-  const totalSpentData = data?.map((item: any) => parseFloat(item.total_spent));
+  const totalSpentData = data?.data.map((item: any) =>
+    parseFloat(item.total_spent)
+  );
 
   const chartData = {
     labels,
@@ -53,7 +55,7 @@ const SpendingChart = () => {
   };
 
   const options: any = {
-    maintainAspectRatio: false, // Allow the chart to use container dimensions
+    maintainAspectRatio: false,
     responsive: true,
     plugins: {
       legend: {

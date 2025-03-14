@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import ExpenseForm from "../../components/expense-form/ExpenseForm";
-import FilterBar from "../../components/filter-bar/FilterBar";
-import DeleteConfirmation from "../../components/delete-confirmation/DeleteConfirmation";
+import ExpenseForm from "../../components/expense-form";
+import FilterBar from "../../components/filter-bar";
+import DeleteConfirmation from "../../components/delete-confirmation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   expenseApi,
@@ -10,99 +10,9 @@ import {
   deleteExpenseApi,
 } from "../../features/api";
 import moment from "moment";
-
-// Define types based on the database schema
-interface Expense {
-  id: number;
-  user_id: number;
-  category_id: number;
-  amount: number;
-  date: string;
-  description: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface User {
-  id: number;
-  name: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-// Mock data for demonstration
-const mockUsers: User[] = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Jane Smith" },
-  { id: 3, name: "Robert Johnson" },
-];
-
-const mockCategories: Category[] = [
-  { id: 1, name: "Food" },
-  { id: 2, name: "Transportation" },
-  { id: 3, name: "Entertainment" },
-  { id: 4, name: "Utilities" },
-  { id: 5, name: "Shopping" },
-];
-
-const mockExpenses: Expense[] = [
-  {
-    id: 1,
-    user_id: 1,
-    category_id: 1,
-    amount: 45.5,
-    date: "2023-03-15",
-    description: "Grocery shopping",
-    created_at: "2023-03-15T10:30:00",
-    updated_at: "2023-03-15T10:30:00",
-  },
-  {
-    id: 2,
-    user_id: 1,
-    category_id: 2,
-    amount: 25.0,
-    date: "2023-03-16",
-    description: "Uber ride",
-    created_at: "2023-03-16T14:20:00",
-    updated_at: "2023-03-16T14:20:00",
-  },
-  {
-    id: 3,
-    user_id: 2,
-    category_id: 3,
-    amount: 60.75,
-    date: "2023-03-17",
-    description: "Movie tickets",
-    created_at: "2023-03-17T19:45:00",
-    updated_at: "2023-03-17T19:45:00",
-  },
-  {
-    id: 4,
-    user_id: 3,
-    category_id: 4,
-    amount: 120.3,
-    date: "2023-03-18",
-    description: "Electricity bill",
-    created_at: "2023-03-18T09:15:00",
-    updated_at: "2023-03-18T09:15:00",
-  },
-  {
-    id: 5,
-    user_id: 2,
-    category_id: 5,
-    amount: 89.99,
-    date: "2023-03-19",
-    description: "New headphones",
-    created_at: "2023-03-19T16:30:00",
-    updated_at: "2023-03-19T16:30:00",
-  },
-];
+import { Category, Expense, User } from "../../features/interface";
 
 export default function Expenses() {
-  // State for expenses data
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
   const [categoryData, setCategoryData] = useState<any[]>([]);
@@ -155,15 +65,15 @@ export default function Expenses() {
 
   useEffect(() => {
     if (typeof expense_data !== "undefined") {
-      setFilteredExpenses(expense_data);
+      setFilteredExpenses(expense_data.data);
     }
 
     if (typeof users_data !== "undefined") {
-      setUsersData(users_data);
+      setUsersData(users_data.data);
     }
 
     if (typeof category_data !== "undefined") {
-      setCategoryData(category_data);
+      setCategoryData(category_data.data);
     }
   }, [expense_data, category_data, users_data]);
 
@@ -199,7 +109,6 @@ export default function Expenses() {
     setIsAddFormOpen(false);
   };
 
-  // Handle updating an expense
   const handleUpdateExpense = (updatedExpense: Expense) => {
     setExpenses(
       expenses.map((expense) =>
@@ -212,7 +121,6 @@ export default function Expenses() {
     setCurrentExpense(null);
   };
 
-  // Handle deleting an expense
   const handleDeleteExpense = () => {
     if (expenseToDelete !== null) {
       deleteExpenseMutate({ id: expenseToDelete });
@@ -221,17 +129,23 @@ export default function Expenses() {
     }
   };
 
-  // Open edit form with the selected expense
   const openEditForm = (expense: Expense) => {
     setCurrentExpense(expense);
     setIsEditFormOpen(true);
   };
 
-  // Open delete confirmation for the selected expense
   const openDeleteConfirm = (id: number) => {
     setExpenseToDelete(id);
     setIsDeleteConfirmOpen(true);
   };
+
+  if (expenseisLoading || usersisLoading || categoryisLoading) {
+    return <div>loading</div>;
+  }
+
+  if (expenseisError || usersisError || categoryisError) {
+    return <div>loading</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -385,7 +299,6 @@ export default function Expenses() {
           </table>
         </div>
 
-        {/* Summary footer */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-700">

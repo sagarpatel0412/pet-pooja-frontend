@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
-interface SidebarInterface {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}
+import { SidebarInterface } from "../../features/interface";
 
 const Sidebar = ({ open, setOpen }: SidebarInterface) => {
   const [activeItem, setActiveItem] = useState("dashboard");
@@ -51,22 +47,34 @@ const Sidebar = ({ open, setOpen }: SidebarInterface) => {
         </svg>
       ),
     },
+    {
+      id: "users",
+      name: "Users",
+      link: "/users",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="7" r="4" />
+          <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
+        </svg>
+      ),
+    },
   ];
   return (
     <>
-      {/* Mobile sidebar backdrop */}
-      {/* {open && (
-        <div
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )} */}
-
-      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-white border-r border-gray-200 transition duration-300 ease-in-out lg:static lg:translate-x-0 $`}
       >
-        {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           <div className="flex items-center">
             <svg
@@ -113,13 +121,6 @@ const Sidebar = ({ open, setOpen }: SidebarInterface) => {
                       ? "text-indigo-700 bg-indigo-50"
                       : "text-gray-700 hover:text-indigo-700 hover:bg-indigo-50"
                   }`}
-                  // onClick={(e) => {
-                  //   e.preventDefault();
-                  //   setActiveItem(item.id);
-                  //   if (window.innerWidth < 1024) {
-                  //     setOpen(false);
-                  //   }
-                  // }}
                 >
                   <span
                     className={`${

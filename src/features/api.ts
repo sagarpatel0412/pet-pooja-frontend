@@ -1,13 +1,6 @@
 import axios from "./axios";
 import { AxiosError } from "axios";
 
-interface ExpenseParams {
-  user_id: number | string;
-  category_id: number | string;
-  startDate: string;
-  endDate: string;
-}
-
 const expenseApi = async (params: any) => {
   try {
     // Build the query string from provided parameters

@@ -1,25 +1,5 @@
-import type React from "react";
-
 import { useState } from "react";
-
-interface FilterBarProps {
-  categories: { id: number; name: string }[];
-  users: { id: number; name: string }[];
-  filters: {
-    category_id: any;
-    user_id: any;
-    startDate: string;
-    endDate: string;
-  };
-  setFilters: React.Dispatch<
-    React.SetStateAction<{
-      category_id: any;
-      user_id: any;
-      startDate: string;
-      endDate: string;
-    }>
-  >;
-}
+import { FilterBarProps } from "../../features/interface";
 
 export default function FilterBar({
   categories,

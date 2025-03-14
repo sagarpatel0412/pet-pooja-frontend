@@ -1,21 +1,34 @@
-import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
-import Common from "./components/common/Common";
-import Dashboard from "./pages/dashboard/Dashboard";
-import Expenses from "./pages/expenses/Expenses";
+import Common from "./components/common";
+import { Bounce, ToastContainer } from "react-toastify";
+import Expenses from "./pages/expenses";
+import Dashboard from "./pages/dashboard";
+import Users from "./pages/users";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <Router>
       <Routes>
         <Route element={<Common />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/users" element={<Users />} />
         </Route>
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        transition={Bounce}
+      />
     </Router>
   );
 }
