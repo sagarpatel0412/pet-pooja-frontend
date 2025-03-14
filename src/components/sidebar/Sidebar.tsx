@@ -77,13 +77,13 @@ const Sidebar = ({ open, setOpen }: SidebarInterface) => {
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           <div className="flex items-center">
-            <svg
+            {/* <svg
               className="w-8 h-8 text-indigo-600"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-            </svg>
+            </svg> */}
             <span className="ml-2 text-xl font-semibold text-gray-800">
               Dashboard
             </span>
